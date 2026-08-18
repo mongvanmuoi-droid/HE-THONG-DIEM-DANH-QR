@@ -24,7 +24,13 @@ export default function ConfigPanel() {
   const fetchConfig = async () => {
     setLoading(true)
     const { data, error } = await supabase.from('config').select('*').limit(1).single()
-    if (data) setConfig(data)
+    if (data) {
+      setConfig(data)
+    } else {
+      // Auto create a row
+      const { data: newData } = await supabase.from('config').insert({ is_active: false, meeting_name: 'Hội nghị', location: '' }).select().single()
+      if (newData) setConfig(newData)
+    }
     setLoading(false)
   }
 
