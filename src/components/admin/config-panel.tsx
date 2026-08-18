@@ -34,7 +34,7 @@ export default function ConfigPanel() {
     if (data) {
       setConfig(data)
     } else {
-      const { data: newData } = await supabase.from('config').insert({ is_active: false, meeting_name: 'Hội nghị', location: '' }).select().single()
+      const { data: newData } = await supabase.from('config').insert({ is_active: false, meeting_name: 'Hội nghị', location: '', meeting_time: '08:00' }).select().single()
       if (newData) setConfig(newData)
     }
     setLoading(false)
@@ -56,6 +56,7 @@ export default function ConfigPanel() {
       .update({
         meeting_name: config.meeting_name,
         meeting_date: config.meeting_date,
+        meeting_time: config.meeting_time,
         location: config.location,
         is_active: config.is_active
       })
@@ -169,12 +170,22 @@ export default function ConfigPanel() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="meeting_date">Ngày họp (Thay đổi ngày sẽ tự động reset thiết bị đã điểm danh)</Label>
+            <Label htmlFor="meeting_date">Ngày họp (Thay đổi ngày/giờ sẽ tự động reset thiết bị đã điểm danh)</Label>
             <Input 
               id="meeting_date" 
               type="date"
               value={config.meeting_date || ''} 
               onChange={(e) => setConfig({ ...config, meeting_date: e.target.value })}
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="meeting_time">Giờ họp</Label>
+            <Input 
+              id="meeting_time" 
+              type="time"
+              value={config.meeting_time || ''} 
+              onChange={(e) => setConfig({ ...config, meeting_time: e.target.value })}
             />
           </div>
 

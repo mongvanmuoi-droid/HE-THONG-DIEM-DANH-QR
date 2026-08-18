@@ -48,7 +48,7 @@ export default function CheckinForm() {
       setConfig(configData)
 
       // 2. Check if device is locked FOR THIS MEETING
-      const lockKey = `device_checked_in_${configData.meeting_date || 'default'}`
+      const lockKey = `device_checked_in_${configData.meeting_date || 'default'}_${configData.meeting_time || 'default'}`
       const isLocked = localStorage.getItem(lockKey)
       if (isLocked) {
         setStatus('error')
@@ -151,7 +151,7 @@ export default function CheckinForm() {
         })
 
       // Lock device
-      const lockKey = `device_checked_in_${config?.meeting_date || 'default'}`
+      const lockKey = `device_checked_in_${config?.meeting_date || 'default'}_${config?.meeting_time || 'default'}`
       localStorage.setItem(lockKey, 'true')
       
       setStatus('success')
@@ -201,7 +201,10 @@ export default function CheckinForm() {
         <CardTitle className="text-red-700 font-bold text-2xl uppercase tracking-wider mb-2">
           {config?.meeting_name || 'Hội nghị'}
         </CardTitle>
-        <p className="text-yellow-600 font-semibold">{config?.meeting_date ? new Date(config.meeting_date).toLocaleDateString('vi-VN') : ''}</p>
+        <p className="text-yellow-600 font-semibold">
+          {config?.meeting_date ? new Date(config.meeting_date).toLocaleDateString('vi-VN') : ''}
+          {config?.meeting_time ? ` - ${config.meeting_time}` : ''}
+        </p>
         <p className="text-sm text-gray-600">{config?.location}</p>
       </CardHeader>
       
