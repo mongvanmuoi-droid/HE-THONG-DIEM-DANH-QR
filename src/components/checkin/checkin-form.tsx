@@ -37,16 +37,7 @@ export default function CheckinForm() {
     }
 
     const init = async () => {
-      // 1. Check if device is locked
-      const isLocked = localStorage.getItem('device_checked_in')
-      if (isLocked) {
-        setStatus('error')
-        setMessage('Thiết bị này đã được sử dụng để điểm danh. Mỗi thiết bị chỉ được điểm danh một lần.')
-        setLoading(false)
-        return
-      }
-
-      // 2. Fetch config
+      // 1. Fetch config FIRST
       const { data: configData } = await supabase.from('config').select('*').limit(1).single()
       if (!configData?.is_active) {
         setStatus('closed')
@@ -55,6 +46,16 @@ export default function CheckinForm() {
         return
       }
       setConfig(configData)
+
+      // 2. Check if device is locked FOR THIS MEETING
+      const lockKey = `device_checked_in_${configData.meeting_date || 'default'}`
+      const isLocked = localStorage.getItem(lockKey)
+      if (isLocked) {
+        setStatus('error')
+        setMessage('Thiết bị này đã được sử dụng để điểm danh cho cuộc họp này. Mỗi thiết bị chỉ được điểm danh một lần.')
+        setLoading(false)
+        return
+      }
 
       // 2.5 Fetch seat status
       const { data: seatData } = await supabase.from('seats').select('status, delegate_name').eq('seat_number', seat).single()
@@ -150,7 +151,8 @@ export default function CheckinForm() {
         })
 
       // Lock device
-      localStorage.setItem('device_checked_in', 'true')
+      const lockKey = `device_checked_in_${config?.meeting_date || 'default'}`
+      localStorage.setItem(lockKey, 'true')
       
       setStatus('success')
       setMessage(`Chào mừng ${isSubstituted ? 'đại biểu' : ''} ${finalDelegateName} đã đến tham dự hội nghị!`)

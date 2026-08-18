@@ -16,8 +16,6 @@ type Seat = {
 
 export default function SeatMap() {
   const [seats, setSeats] = useState<Seat[]>([])
-  const [isGenerating, setIsGenerating] = useState(false)
-  const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchSeats()
@@ -41,72 +39,7 @@ export default function SeatMap() {
     }
   }
 
-  const handleGenerateSeats = async () => {
-    if (!confirm('Hành động này sẽ XÓA TOÀN BỘ dữ liệu ghế hiện tại và tạo lại 280 ghế theo cấu hình chuẩn. Bạn có chắc chắn?')) return
-    
-    setIsGenerating(true)
-    try {
-      // Clear existing
-      const { error: delError } = await supabase.from('seats').delete().neq('seat_number', 'impossible_value') // delete all
-      if (delError) throw new Error(delError.message)
-      
-      const newSeats: Seat[] = []
-      
-      // Hàng 1-2: Ghế 1-32 (Reserved)
-      for (let i = 1; i <= 32; i++) {
-        newSeats.push({ seat_number: i.toString(), status: 'Reserved' })
-      }
-      
-      // Hàng 3-16: Ghế 33-280 (Empty)
-      for (let i = 33; i <= 280; i++) {
-        newSeats.push({ seat_number: i.toString(), status: 'Empty' })
-      }
 
-      // Insert in chunks to avoid size limits
-      const chunkSize = 100
-      for (let i = 0; i < newSeats.length; i += chunkSize) {
-        const chunk = newSeats.slice(i, i + chunkSize)
-        const { error: insError } = await supabase.from('seats').insert(chunk)
-        if (insError) throw new Error(insError.message)
-      }
-
-      alert('Đã khởi tạo thành công 280 ghế!')
-      fetchSeats()
-    } catch (err: any) {
-      console.error(err)
-      alert('Có lỗi xảy ra: ' + err.message)
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handlePrintQRs = () => {
-    if (!printRef.current) return
-    const content = printRef.current.innerHTML
-    const printWindow = window.open('', '', 'width=800,height=600')
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>In Mã QR</title>
-            <style>
-              body { font-family: sans-serif; margin: 0; padding: 20px; }
-              .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-              .qr-item { text-align: center; border: 1px dashed #ccc; padding: 15px; page-break-inside: avoid; }
-              .qr-item p { font-size: 24px; font-weight: bold; margin-top: 10px; }
-            </style>
-          </head>
-          <body>
-            <div class="qr-grid">${content}</div>
-            <script>
-              window.onload = () => { window.print(); window.close(); }
-            </script>
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
-    }
-  }
 
   // Render Logic
   const renderRow = (startSeat: number, count: number, rowNum: number) => {
@@ -178,14 +111,6 @@ export default function SeatMap() {
             <CardTitle>Sơ đồ Hội trường (Live Map)</CardTitle>
             <CardDescription>Giám sát vị trí ngồi trực tiếp. (Tổng: 280 ghế)</CardDescription>
           </div>
-          <div className="flex gap-2">
-            <Button variant="destructive" onClick={handleGenerateSeats} disabled={isGenerating}>
-              {isGenerating ? 'Đang tạo...' : 'Khởi tạo 280 ghế chuẩn'}
-            </Button>
-            <Button variant="outline" onClick={handlePrintQRs} disabled={seats.length === 0}>
-              In Mã QR 280 Ghế
-            </Button>
-          </div>
         </CardHeader>
         <CardContent>
           {/* Chú giải */}
@@ -235,22 +160,7 @@ export default function SeatMap() {
         </CardContent>
       </Card>
 
-      {/* Hidden QR Codes for printing */}
-      <div className="hidden">
-        <div ref={printRef}>
-          {seats.map(seat => (
-            <div key={seat.seat_number} className="qr-item">
-              <QRCodeSVG 
-                value={getCheckinUrl(seat.seat_number)} 
-                size={200}
-                level="H"
-                includeMargin={true}
-              />
-              <p>Ghế {seat.seat_number}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+
     </div>
   )
 }
