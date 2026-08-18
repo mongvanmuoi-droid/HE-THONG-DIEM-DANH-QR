@@ -9,10 +9,10 @@ export default function AdminPage() {
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-gray-100/80 p-1.5 rounded-2xl w-full flex h-[60px] shadow-inner mb-8 mt-2 mx-auto">
-          <TabsTrigger value="overview" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md rounded-xl transition-all h-full">Tổng quan</TabsTrigger>
-          <TabsTrigger value="config" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md rounded-xl transition-all h-full">Cấu hình</TabsTrigger>
-          <TabsTrigger value="delegates" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md rounded-xl transition-all h-full">Đại biểu & QR</TabsTrigger>
-          <TabsTrigger value="seats" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-white data-[state=active]:text-red-700 data-[state=active]:shadow-md rounded-xl transition-all h-full">Chỗ ngồi</TabsTrigger>
+          <TabsTrigger value="overview" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl transition-all h-full">Tổng quan</TabsTrigger>
+          <TabsTrigger value="config" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl transition-all h-full">Cấu hình</TabsTrigger>
+          <TabsTrigger value="delegates" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl transition-all h-full">Đại biểu & QR</TabsTrigger>
+          <TabsTrigger value="seats" className="flex-1 text-[15px] font-bold text-gray-600 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md rounded-xl transition-all h-full">Chỗ ngồi</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           <StatsCards />
