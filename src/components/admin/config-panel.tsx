@@ -133,12 +133,22 @@ export default function ConfigPanel() {
     if (!confirm('Bạn có chắc chắn 100% muốn xóa sạch dữ liệu để tổ chức hội nghị mới?')) return
 
     try {
-      await supabase.from('delegates').delete().neq('id', 'impossible_value')
-      await supabase.from('checkin_logs').delete().neq('id', 'impossible_value')
-      await supabase.from('seats').update({ status: 'Empty', delegate_name: null }).neq('status', 'Empty_impossible_value')
+      const { error: err1 } = await supabase.from('delegates').delete().not('id', 'is', null)
+      if (err1) throw new Error('Lỗi xóa đại biểu: ' + err1.message)
+
+      const { error: err2 } = await supabase.from('checkin_logs').delete().not('id', 'is', null)
+      if (err2) throw new Error('Lỗi xóa lịch sử: ' + err2.message)
+
+      const { error: err3 } = await supabase.from('seats').update({ status: 'Empty', delegate_name: null }).eq('status', 'Occupied')
+      if (err3) throw new Error('Lỗi reset ghế: ' + err3.message)
+
+      const { error: err4 } = await supabase.from('seats').update({ delegate_name: null }).eq('status', 'Reserved')
+      if (err4) throw new Error('Lỗi reset tên ghế VIP: ' + err4.message)
+
       alert('Đã dọn dẹp sạch sẽ hệ thống. Hệ thống đã sẵn sàng cho hội nghị mới!')
+      fetchSeats()
     } catch (e: any) {
-      alert('Lỗi: ' + e.message)
+      alert(e.message)
     }
   }
 
