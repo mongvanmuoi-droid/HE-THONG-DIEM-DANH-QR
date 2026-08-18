@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '@/lib/supabase/client'
 import { generateAbsentDocx } from '@/lib/doc-export'
+import * as XLSX from 'xlsx'
 import type { Database } from '@/types/database'
 
 type Delegate = Database['public']['Tables']['delegates']['Row']
@@ -52,6 +53,8 @@ export default function DelegateTable() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [newDelegate, setNewDelegate] = useState({ name: '', unit: '', seat_number: '' })
   const [isAdding, setIsAdding] = useState(false)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
 
   const handleAddDelegate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,6 +91,60 @@ export default function DelegateTable() {
     setIsAdding(false)
   }
 
+  const downloadTemplate = () => {
+    const ws = XLSX.utils.aoa_to_sheet([['STT', 'Họ và tên', 'Đơn vị']])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Template')
+    XLSX.writeFile(wb, 'DanhSachDaiBieu_Mau.xlsx')
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result
+        const wb = XLSX.read(bstr, { type: 'binary' })
+        const wsname = wb.SheetNames[0]
+        const ws = wb.Sheets[wsname]
+        const data = XLSX.utils.sheet_to_json(ws) as any[]
+
+        const delegatesToInsert = data.map((row) => ({
+          name: row['Họ và tên'],
+          unit: row['Đơn vị'] || 'Khách mời',
+          status: 'Pending',
+          seat_number: null
+        })).filter(d => d.name) // Filter out empty rows
+
+        if (delegatesToInsert.length === 0) {
+          alert('Không tìm thấy dữ liệu hợp lệ trong file. Vui lòng kiểm tra lại tên cột (Họ và tên, Đơn vị).')
+          setIsImporting(false)
+          return
+        }
+
+        const { error } = await supabase.from('delegates').insert(delegatesToInsert)
+
+        if (error) {
+          console.error(error)
+          alert('Lỗi khi lưu vào cơ sở dữ liệu: ' + error.message)
+        } else {
+          alert(`Đã nhập thành công ${delegatesToInsert.length} đại biểu!`)
+          fetchDelegates()
+          setIsImportDialogOpen(false)
+        }
+      } catch (error) {
+        console.error(error)
+        alert('Lỗi khi đọc file Excel.')
+      } finally {
+        setIsImporting(false)
+      }
+    }
+    reader.readAsBinaryString(file)
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -95,7 +152,38 @@ export default function DelegateTable() {
           <CardTitle>Danh sách đại biểu</CardTitle>
           <CardDescription>Quản lý và theo dõi trạng thái điểm danh của đại biểu.</CardDescription>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogTrigger render={<Button variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100" />}>Nhập từ Excel</DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Nhập danh sách từ Excel</DialogTitle>
+                <DialogDescription>
+                  Tải lên file Excel (.xlsx) chứa danh sách đại biểu.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6 pt-4">
+                <Button variant="link" onClick={downloadTemplate} className="px-0">
+                  Tải file mẫu (Template)
+                </Button>
+                <div className="grid w-full max-w-sm items-center gap-1.5">
+                  <label htmlFor="excel-file" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Chọn file Excel
+                  </label>
+                  <input 
+                    id="excel-file" 
+                    type="file" 
+                    accept=".xlsx, .xls"
+                    onChange={handleFileUpload}
+                    disabled={isImporting}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                  {isImporting && <p className="text-sm text-muted-foreground mt-2">Đang xử lý...</p>}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger render={<Button variant="default" />}>Thêm Đại biểu</DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">

@@ -17,6 +17,8 @@ export default function CheckinForm() {
   const [loading, setLoading] = useState(true)
   const [config, setConfig] = useState<any>(null)
   const [delegates, setDelegates] = useState<Delegate[]>([])
+  const [filteredDelegates, setFilteredDelegates] = useState<Delegate[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [selectedDelegate, setSelectedDelegate] = useState<string>('')
   
   const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'closed' | 'already_checked_in'>('idle')
@@ -50,30 +52,51 @@ export default function CheckinForm() {
       }
       setConfig(configData)
 
-      // 3. Fetch delegates for this seat
+      // 2.5 Fetch seat status
+      const { data: seatData } = await supabase.from('seats').select('status, delegate_name').eq('seat_number', seat).single()
+      if (!seatData) {
+        setStatus('error')
+        setMessage('Mã QR không hợp lệ hoặc ghế không tồn tại.')
+        setLoading(false)
+        return
+      }
+      if (seatData.status !== 'Empty') {
+        setStatus('error')
+        setMessage(seatData.status === 'Reserved' ? 'Ghế này đã được đặt trước cho khách mời.' : `Ghế này đã có người ngồi (${seatData.delegate_name}).`)
+        setLoading(false)
+        return
+      }
+
+      // 3. Fetch all pending delegates
       const { data: delegateData } = await supabase
         .from('delegates')
         .select('*')
-        .eq('seat_number', seat)
+        .eq('status', 'Pending')
+        .order('name', { ascending: true })
 
       if (!delegateData || delegateData.length === 0) {
         setStatus('error')
-        setMessage('Không tìm thấy đại biểu nào được xếp vào ghế này.')
+        setMessage('Không có đại biểu nào trong danh sách chờ.')
       } else {
-        const pendingDelegates = delegateData.filter(d => d.status === 'Pending')
-        if (pendingDelegates.length === 0) {
-          setStatus('already_checked_in')
-          setMessage('Ghế này đã được điểm danh.')
-        } else {
-          setDelegates(pendingDelegates)
-          setSelectedDelegate(pendingDelegates[0].id)
-        }
+        setDelegates(delegateData)
+        setFilteredDelegates(delegateData)
       }
       setLoading(false)
     }
 
     init()
   }, [seat])
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredDelegates(delegates)
+    } else {
+      const lowerQuery = searchQuery.toLowerCase()
+      setFilteredDelegates(
+        delegates.filter(d => d.name.toLowerCase().includes(lowerQuery) || d.unit.toLowerCase().includes(lowerQuery))
+      )
+    }
+  }, [searchQuery, delegates])
 
   const handleCheckin = async () => {
     if (!selectedDelegate || !seat) return
@@ -83,17 +106,27 @@ export default function CheckinForm() {
     
     // Perform updates
     try {
-      // 1. Update delegates
-      await supabase
-        .from('delegates')
-        .update({ status: 'Attended', checkin_time: new Date().toISOString() })
-        .eq('id', selectedDelegate)
-
-      // 2. Update seats
-      await supabase
+      // 1. Update seats with concurrency control
+      const { data: updatedSeat, error: seatError } = await supabase
         .from('seats')
         .update({ status: 'Occupied', delegate_name: delegateInfo?.name })
         .eq('seat_number', seat)
+        .eq('status', 'Empty')
+        .select()
+        .single()
+        
+      if (seatError || !updatedSeat) {
+        setStatus('error')
+        setMessage('Rất tiếc, ghế này vừa bị người khác chọn trước bạn vài giây. Vui lòng chọn ghế khác.')
+        setLoading(false)
+        return
+      }
+      
+      // 2. Update delegates
+      await supabase
+        .from('delegates')
+        .update({ status: 'Attended', checkin_time: new Date().toISOString(), seat_number: seat })
+        .eq('id', selectedDelegate)
 
       // 3. Insert log
       await supabase
@@ -165,9 +198,16 @@ export default function CheckinForm() {
         </div>
 
         <div className="space-y-3">
-          <label className="block text-sm font-bold text-gray-700 uppercase">Xác nhận đại biểu</label>
-          <div className="space-y-2">
-            {delegates.map((d) => (
+          <label className="block text-sm font-bold text-gray-700 uppercase">Tìm kiếm & Xác nhận đại biểu</label>
+          <input 
+            type="text"
+            placeholder="🔎 Nhập tên của bạn hoặc đơn vị..."
+            className="w-full h-12 px-4 rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-red-500 transition-colors"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+            {filteredDelegates.map((d) => (
               <div 
                 key={d.id}
                 onClick={() => setSelectedDelegate(d.id)}
@@ -181,6 +221,9 @@ export default function CheckinForm() {
                 <p className="text-sm text-gray-600">{d.unit}</p>
               </div>
             ))}
+            {filteredDelegates.length === 0 && (
+              <p className="text-center text-gray-500 py-4">Không tìm thấy đại biểu phù hợp.</p>
+            )}
           </div>
         </div>
       </CardContent>
