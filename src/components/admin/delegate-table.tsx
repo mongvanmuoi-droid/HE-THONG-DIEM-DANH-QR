@@ -113,13 +113,20 @@ export default function DelegateTable() {
         const ws = wb.Sheets[wsname]
         const data = XLSX.utils.sheet_to_json(ws) as any[]
 
-        const delegatesToInsert = data.map((row) => ({
-          name: row['Họ và tên'],
-          unit: row['Đơn vị'] || 'Khách mời',
-          phone: row['Số điện thoại'] ? String(row['Số điện thoại']) : null,
-          status: 'Pending',
-          seat_number: null
-        })).filter(d => d.name) // Filter out empty rows
+        const delegatesToInsert = data.map((row) => {
+          const normalizedRow: Record<string, any> = {}
+          for (const key in row) {
+            normalizedRow[key.trim().toLowerCase()] = row[key]
+          }
+
+          return {
+            name: normalizedRow['họ và tên'] || normalizedRow['họ tên'] || normalizedRow['name'],
+            unit: normalizedRow['đơn vị'] || normalizedRow['chi bộ'] || normalizedRow['phòng ban'] || 'Khách mời',
+            phone: normalizedRow['số điện thoại'] || normalizedRow['sđt'] || normalizedRow['điện thoại'] ? String(normalizedRow['số điện thoại'] || normalizedRow['sđt'] || normalizedRow['điện thoại']) : null,
+            status: 'Pending',
+            seat_number: null
+          }
+        }).filter(d => d.name) // Filter out empty rows
 
         if (delegatesToInsert.length === 0) {
           alert('Không tìm thấy dữ liệu hợp lệ trong file. Vui lòng kiểm tra lại tên cột (Họ và tên, Đơn vị).')
