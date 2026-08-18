@@ -21,6 +21,9 @@ export default function ConfigPanel() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [showSeatForm, setShowSeatForm] = useState(false)
+  const [totalSeats, setTotalSeats] = useState(280)
+  const [vipSeats, setVipSeats] = useState('1-32')
   const printRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -67,16 +70,41 @@ export default function ConfigPanel() {
     setSaving(false)
   }
 
-  const handleGenerateSeats = async () => {
-    if (!confirm('Hành động này sẽ XÓA TOÀN BỘ dữ liệu ghế hiện tại và tạo lại 280 ghế theo cấu hình chuẩn. Bạn có chắc chắn?')) return
+  const parseVipSeats = (input: string): Set<number> => {
+    const vips = new Set<number>()
+    const parts = input.split(',').map(s => s.trim()).filter(s => s)
+    for (const p of parts) {
+      if (p.includes('-')) {
+        const [startStr, endStr] = p.split('-')
+        const start = parseInt(startStr)
+        const end = parseInt(endStr)
+        if (!isNaN(start) && !isNaN(end) && start <= end) {
+          for (let i = start; i <= end; i++) vips.add(i)
+        }
+      } else {
+        const num = parseInt(p)
+        if (!isNaN(num)) vips.add(num)
+      }
+    }
+    return vips
+  }
+
+  const handleGenerateSeatsCustom = async () => {
+    if (!confirm(`CẢNH BÁO: Bạn sắp XÓA TOÀN BỘ dữ liệu ghế hiện tại và tạo mới ${totalSeats} ghế. Bạn có chắc chắn?`)) return
     setIsGenerating(true)
     try {
-      const { error: delError } = await supabase.from('seats').delete().neq('seat_number', 'impossible_value')
+      const { error: delError } = await supabase.from('seats').delete().not('id', 'is', null)
       if (delError) throw new Error(delError.message)
       
+      const vips = parseVipSeats(vipSeats)
       const newSeats: Partial<Seat>[] = []
-      for (let i = 1; i <= 32; i++) newSeats.push({ seat_number: i.toString(), status: 'Reserved' })
-      for (let i = 33; i <= 280; i++) newSeats.push({ seat_number: i.toString(), status: 'Empty' })
+      
+      for (let i = 1; i <= totalSeats; i++) {
+        newSeats.push({ 
+          seat_number: i.toString(), 
+          status: vips.has(i) ? 'Reserved' : 'Empty' 
+        })
+      }
 
       const chunkSize = 100
       for (let i = 0; i < newSeats.length; i += chunkSize) {
@@ -84,8 +112,9 @@ export default function ConfigPanel() {
         const { error: insError } = await supabase.from('seats').insert(chunk)
         if (insError) throw new Error(insError.message)
       }
-      alert('Đã khởi tạo thành công 280 ghế!')
+      alert(`Đã khởi tạo thành công ${totalSeats} ghế!`)
       fetchSeats()
+      setShowSeatForm(false)
     } catch (err: any) {
       alert('Có lỗi xảy ra: ' + err.message)
     } finally {
@@ -240,14 +269,45 @@ export default function ConfigPanel() {
           <CardDescription className="text-red-600/80">Các công cụ quản trị hệ thống cấp cao.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border border-gray-200 rounded-lg">
-            <div>
-              <p className="font-bold text-gray-900 flex items-center gap-2"><LayoutGrid className="w-4 h-4" /> Khởi tạo Sơ đồ ghế</p>
-              <p className="text-sm text-gray-500">Tạo lại 280 ghế (32 Reserved, 248 Empty).</p>
+          <div className="flex flex-col gap-4 p-4 border border-gray-200 rounded-lg">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div>
+                <p className="font-bold text-gray-900 flex items-center gap-2"><LayoutGrid className="w-4 h-4" /> Khởi tạo Sơ đồ ghế</p>
+                <p className="text-sm text-gray-500">Tùy chỉnh số lượng ghế và các vị trí ghế VIP đặt trước.</p>
+              </div>
+              <Button variant="outline" onClick={() => setShowSeatForm(!showSeatForm)}>
+                {showSeatForm ? 'Hủy bỏ' : 'Thiết lập sơ đồ'}
+              </Button>
             </div>
-            <Button variant="outline" onClick={handleGenerateSeats} disabled={isGenerating}>
-              {isGenerating ? 'Đang tạo...' : 'Khởi tạo 280 ghế'}
-            </Button>
+            
+            {showSeatForm && (
+              <div className="mt-2 p-4 bg-gray-50 rounded-md border border-gray-200 space-y-4">
+                <div className="grid gap-2">
+                  <Label>Tổng số lượng ghế hội trường</Label>
+                  <Input 
+                    type="number" 
+                    value={totalSeats} 
+                    onChange={e => setTotalSeats(parseInt(e.target.value) || 0)} 
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Các ghế VIP đặt trước (Phân cách bằng dấu phẩy, dùng dấu gạch ngang cho khoảng)</Label>
+                  <Input 
+                    type="text" 
+                    value={vipSeats} 
+                    onChange={e => setVipSeats(e.target.value)} 
+                    placeholder="VD: 1-32, 40, 50"
+                  />
+                </div>
+                <Button 
+                  onClick={handleGenerateSeatsCustom} 
+                  disabled={isGenerating || totalSeats <= 0} 
+                  className="w-full bg-gray-900 text-white hover:bg-gray-800"
+                >
+                  {isGenerating ? 'Đang khởi tạo...' : `Tạo mới ${totalSeats} ghế`}
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 border border-gray-200 rounded-lg">
