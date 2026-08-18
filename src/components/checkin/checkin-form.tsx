@@ -21,6 +21,10 @@ export default function CheckinForm() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDelegate, setSelectedDelegate] = useState<string>('')
   
+  const [isSubstituted, setIsSubstituted] = useState(false)
+  const [substituteName, setSubstituteName] = useState('')
+  const [substituteUnit, setSubstituteUnit] = useState('')
+  
   const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'closed' | 'already_checked_in'>('idle')
   const [message, setMessage] = useState('')
 
@@ -103,13 +107,14 @@ export default function CheckinForm() {
     setLoading(true)
 
     const delegateInfo = delegates.find(d => d.id === selectedDelegate)
+    const finalDelegateName = isSubstituted ? `${substituteName} (Thay: ${delegateInfo?.name})` : delegateInfo?.name
     
     // Perform updates
     try {
       // 1. Update seats with concurrency control
       const { data: updatedSeat, error: seatError } = await supabase
         .from('seats')
-        .update({ status: 'Occupied', delegate_name: delegateInfo?.name })
+        .update({ status: 'Occupied', delegate_name: finalDelegateName })
         .eq('seat_number', seat)
         .eq('status', 'Empty')
         .select()
@@ -125,7 +130,14 @@ export default function CheckinForm() {
       // 2. Update delegates
       await supabase
         .from('delegates')
-        .update({ status: 'Attended', checkin_time: new Date().toISOString(), seat_number: seat })
+        .update({ 
+          status: 'Attended', 
+          checkin_time: new Date().toISOString(), 
+          seat_number: seat,
+          is_substituted: isSubstituted,
+          substitute_name: isSubstituted ? substituteName : null,
+          substitute_unit: isSubstituted ? substituteUnit : null
+        })
         .eq('id', selectedDelegate)
 
       // 3. Insert log
@@ -133,7 +145,7 @@ export default function CheckinForm() {
         .from('checkin_logs')
         .insert({
           delegate_id: selectedDelegate,
-          delegate_name: delegateInfo?.name,
+          delegate_name: finalDelegateName,
           seat_number: seat
         })
 
@@ -141,7 +153,7 @@ export default function CheckinForm() {
       localStorage.setItem('device_checked_in', 'true')
       
       setStatus('success')
-      setMessage(`Chào mừng đại biểu ${delegateInfo?.name} đã đến tham dự hội nghị!`)
+      setMessage(`Chào mừng ${isSubstituted ? 'đại biểu' : ''} ${finalDelegateName} đã đến tham dự hội nghị!`)
     } catch (err) {
       setStatus('error')
       setMessage('Có lỗi xảy ra trong quá trình điểm danh. Vui lòng thử lại.')
@@ -225,6 +237,45 @@ export default function CheckinForm() {
               <p className="text-center text-gray-500 py-4">Không tìm thấy đại biểu phù hợp.</p>
             )}
           </div>
+          
+          {selectedDelegate && (
+            <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="w-6 h-6 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                  checked={isSubstituted}
+                  onChange={(e) => setIsSubstituted(e.target.checked)}
+                />
+                <span className="text-gray-900 font-bold">Tôi là NGƯỜI ĐI THAY</span>
+              </label>
+              
+              {isSubstituted && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Họ và tên người đi thay</label>
+                    <input 
+                      type="text"
+                      placeholder="Nhập họ và tên của bạn..."
+                      className="w-full h-10 px-3 rounded-md border border-gray-300 focus:border-red-500 focus:ring-red-500"
+                      value={substituteName}
+                      onChange={(e) => setSubstituteName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Đơn vị người đi thay</label>
+                    <input 
+                      type="text"
+                      placeholder="Nhập đơn vị của bạn..."
+                      className="w-full h-10 px-3 rounded-md border border-gray-300 focus:border-red-500 focus:ring-red-500"
+                      value={substituteUnit}
+                      onChange={(e) => setSubstituteUnit(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
 
@@ -232,7 +283,7 @@ export default function CheckinForm() {
         <Button 
           className="w-full h-14 text-lg font-bold bg-red-700 hover:bg-red-800 text-yellow-400 border border-yellow-500 shadow-lg"
           onClick={handleCheckin}
-          disabled={loading || !selectedDelegate}
+          disabled={loading || !selectedDelegate || (isSubstituted && (!substituteName.trim() || !substituteUnit.trim()))}
         >
           {loading ? 'ĐANG XỬ LÝ...' : 'XÁC NHẬN ĐIỂM DANH'}
         </Button>

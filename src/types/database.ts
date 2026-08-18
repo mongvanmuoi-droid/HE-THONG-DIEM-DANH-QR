@@ -41,6 +41,9 @@ export interface Database {
           seat_number: string | null
           checkin_time: string | null
           phone: string | null
+          is_substituted: boolean | null
+          substitute_name: string | null
+          substitute_unit: string | null
         }
         Insert: {
           id?: string
@@ -50,6 +53,9 @@ export interface Database {
           seat_number?: string | null
           checkin_time?: string | null
           phone?: string | null
+          is_substituted?: boolean | null
+          substitute_name?: string | null
+          substitute_unit?: string | null
         }
         Update: {
           id?: string
@@ -59,6 +65,9 @@ export interface Database {
           seat_number?: string | null
           checkin_time?: string | null
           phone?: string | null
+          is_substituted?: boolean | null
+          substitute_name?: string | null
+          substitute_unit?: string | null
         }
       }
       seats: {
