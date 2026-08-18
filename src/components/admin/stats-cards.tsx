@@ -11,6 +11,8 @@ type DelegateInfo = {
   unit: string
   phone: string | null
   seat_number: string | null
+  is_substituted: boolean | null
+  substitute_name: string | null
 }
 
 export default function StatsCards() {
@@ -30,7 +32,7 @@ export default function StatsCards() {
   }, [])
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('delegates').select('status, name, unit, phone, seat_number').order('name', { ascending: true })
+    const { data } = await supabase.from('delegates').select('status, name, unit, phone, seat_number, is_substituted, substitute_name').order('name', { ascending: true })
     if (data) {
       const total = data.length
       const attended = data.filter(d => d.status === 'Attended')
@@ -89,13 +91,14 @@ export default function StatsCards() {
             <CardDescription className="text-green-600/80 text-xs">Danh sách đại biểu đã check-in thành công.</CardDescription>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
-            <Table>
-              <TableHeader className="bg-gray-50/90 sticky top-0 z-10 shadow-sm">
-                <TableRow>
-                  <TableHead className="w-[50px] text-center text-xs">STT</TableHead>
-                  <TableHead className="text-xs">Họ và tên</TableHead>
-                  <TableHead className="text-xs">Đơn vị</TableHead>
-                  <TableHead className="text-center text-xs w-[80px]">Ghế</TableHead>
+            <Table className="relative">
+              <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
+                <TableRow className="hover:bg-gray-100">
+                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Người đi thay</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Đơn vị</TableHead>
+                  <TableHead className="text-center text-xs w-[60px] font-bold text-gray-700 bg-gray-100 h-10">Ghế</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,6 +109,9 @@ export default function StatsCards() {
                     <TableRow key={index} className="hover:bg-green-50/30 transition-colors">
                       <TableCell className="text-center font-medium text-gray-500 text-xs">{index + 1}</TableCell>
                       <TableCell className="font-bold text-gray-900 text-sm">{delegate.name}</TableCell>
+                      <TableCell className="text-sm font-semibold text-orange-600">
+                        {delegate.is_substituted ? delegate.substitute_name : ''}
+                      </TableCell>
                       <TableCell className="text-gray-600 text-xs">{delegate.unit}</TableCell>
                       <TableCell className="text-center">
                         <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-md bg-green-100 text-green-800 border border-green-200">
@@ -129,13 +135,13 @@ export default function StatsCards() {
             <CardDescription className="text-red-600/80 text-xs">Danh sách cần đôn đốc tham dự hội nghị.</CardDescription>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
-            <Table>
-              <TableHeader className="bg-gray-50/90 sticky top-0 z-10 shadow-sm">
-                <TableRow>
-                  <TableHead className="w-[50px] text-center text-xs">STT</TableHead>
-                  <TableHead className="text-xs">Họ và tên</TableHead>
-                  <TableHead className="text-xs">Đơn vị</TableHead>
-                  <TableHead className="text-xs w-[100px]">Số điện thoại</TableHead>
+            <Table className="relative">
+              <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
+                <TableRow className="hover:bg-gray-100">
+                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Đơn vị</TableHead>
+                  <TableHead className="text-xs w-[100px] font-bold text-gray-700 bg-gray-100 h-10">Số điện thoại</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

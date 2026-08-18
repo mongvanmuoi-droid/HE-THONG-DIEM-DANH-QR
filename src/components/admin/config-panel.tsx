@@ -103,19 +103,27 @@ export default function ConfigPanel() {
           <head>
             <title>In Mã QR</title>
             <style>
-              body { font-family: sans-serif; margin: 0; padding: 20px; text-align: center; }
+              body { font-family: sans-serif; margin: 0; padding: 5mm; text-align: center; }
               .qr-grid { display: block; }
               .qr-item { 
-                display: inline-block;
-                text-align: center; 
-                border: 1px dashed #ccc; 
-                padding: 15px; 
-                margin: 10px;
-                width: 220px;
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border: 1px dashed #999; 
+                margin: 2mm;
+                width: 3.5cm;
+                height: 4cm;
+                box-sizing: border-box;
                 page-break-inside: avoid; 
                 break-inside: avoid;
+                overflow: hidden;
               }
-              .qr-item p { font-size: 24px; font-weight: bold; margin-top: 10px; margin-bottom: 0; }
+              .qr-item svg {
+                width: 3cm !important;
+                height: 3cm !important;
+              }
+              .qr-item p { font-size: 13px; font-weight: bold; margin-top: 2px; margin-bottom: 0; }
             </style>
           </head>
           <body>
