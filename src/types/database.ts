@@ -40,6 +40,7 @@ export interface Database {
           status: string
           seat_number: string | null
           checkin_time: string | null
+          phone: string | null
         }
         Insert: {
           id?: string
@@ -48,6 +49,7 @@ export interface Database {
           status?: string
           seat_number?: string | null
           checkin_time?: string | null
+          phone?: string | null
         }
         Update: {
           id?: string
@@ -56,6 +58,7 @@ export interface Database {
           status?: string
           seat_number?: string | null
           checkin_time?: string | null
+          phone?: string | null
         }
       }
       seats: {

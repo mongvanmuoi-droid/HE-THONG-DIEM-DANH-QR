@@ -51,7 +51,7 @@ export default function DelegateTable() {
   }
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [newDelegate, setNewDelegate] = useState({ name: '', unit: '', seat_number: '' })
+  const [newDelegate, setNewDelegate] = useState({ name: '', unit: '', seat_number: '', phone: '' })
   const [isAdding, setIsAdding] = useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
@@ -66,6 +66,7 @@ export default function DelegateTable() {
         name: newDelegate.name, 
         unit: newDelegate.unit, 
         seat_number: newDelegate.seat_number,
+        phone: newDelegate.phone,
         status: 'Pending'
       }
     ])
@@ -83,7 +84,7 @@ export default function DelegateTable() {
       }
       
       setIsAddDialogOpen(false)
-      setNewDelegate({ name: '', unit: '', seat_number: '' })
+      setNewDelegate({ name: '', unit: '', seat_number: '', phone: '' })
       fetchDelegates()
     } else {
       alert('Có lỗi xảy ra khi thêm đại biểu.')
@@ -92,7 +93,7 @@ export default function DelegateTable() {
   }
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([['STT', 'Họ và tên', 'Đơn vị']])
+    const ws = XLSX.utils.aoa_to_sheet([['STT', 'Họ và tên', 'Đơn vị', 'Số điện thoại']])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Template')
     XLSX.writeFile(wb, 'DanhSachDaiBieu_Mau.xlsx')
@@ -115,6 +116,7 @@ export default function DelegateTable() {
         const delegatesToInsert = data.map((row) => ({
           name: row['Họ và tên'],
           unit: row['Đơn vị'] || 'Khách mời',
+          phone: row['Số điện thoại'] ? String(row['Số điện thoại']) : null,
           status: 'Pending',
           seat_number: null
         })).filter(d => d.name) // Filter out empty rows
@@ -214,11 +216,19 @@ export default function DelegateTable() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Số ghế</label>
                   <input 
-                    required 
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     placeholder="A1"
                     value={newDelegate.seat_number}
                     onChange={(e) => setNewDelegate({...newDelegate, seat_number: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Số điện thoại</label>
+                  <input 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="0901234567"
+                    value={newDelegate.phone}
+                    onChange={(e) => setNewDelegate({...newDelegate, phone: e.target.value})}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isAdding}>
@@ -236,6 +246,7 @@ export default function DelegateTable() {
             <TableRow>
               <TableHead>Họ và tên</TableHead>
               <TableHead>Đơn vị</TableHead>
+              <TableHead>Số điện thoại</TableHead>
               <TableHead>Ghế</TableHead>
               <TableHead>Trạng thái</TableHead>
               <TableHead className="text-right">Hành động</TableHead>
@@ -246,6 +257,7 @@ export default function DelegateTable() {
               <TableRow key={delegate.id}>
                 <TableCell className="font-medium">{delegate.name}</TableCell>
                 <TableCell>{delegate.unit}</TableCell>
+                <TableCell>{delegate.phone || '---'}</TableCell>
                 <TableCell>{delegate.seat_number}</TableCell>
                 <TableCell>
                   <Badge variant={delegate.status === 'Attended' ? 'default' : 'secondary'} className={delegate.status === 'Attended' ? 'bg-green-600' : ''}>
