@@ -90,15 +90,15 @@ export default function StatsCards() {
             </CardTitle>
             <CardDescription className="text-green-600/80 text-xs">Danh sách đại biểu đã check-in thành công.</CardDescription>
           </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
-            <Table className="relative">
+          <CardContent className="p-0 flex-1 overflow-auto custom-scrollbar">
+            <Table className="relative min-w-[500px]">
               <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
                 <TableRow className="hover:bg-gray-100">
-                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10">STT</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Họ và tên</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Người đi thay</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Đơn vị</TableHead>
-                  <TableHead className="text-center text-xs w-[60px] font-bold text-gray-700 bg-gray-100 h-10">Ghế</TableHead>
+                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[120px]">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">Người đi thay</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[100px]">Đơn vị</TableHead>
+                  <TableHead className="text-center text-xs w-[60px] font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">Ghế</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -134,14 +134,14 @@ export default function StatsCards() {
             </CardTitle>
             <CardDescription className="text-red-600/80 text-xs">Danh sách cần đôn đốc tham dự hội nghị.</CardDescription>
           </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
-            <Table className="relative">
+          <CardContent className="p-0 flex-1 overflow-auto custom-scrollbar">
+            <Table className="relative min-w-[500px]">
               <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
                 <TableRow className="hover:bg-gray-100">
-                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10">STT</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Họ và tên</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10">Đơn vị</TableHead>
-                  <TableHead className="text-xs w-[100px] font-bold text-gray-700 bg-gray-100 h-10">Số điện thoại</TableHead>
+                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[120px]">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[100px]">Đơn vị</TableHead>
+                  <TableHead className="text-xs w-[100px] font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">Số điện thoại</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
