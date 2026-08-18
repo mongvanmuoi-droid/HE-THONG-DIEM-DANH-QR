@@ -6,15 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Users, UserCheck, UserX } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
-type PendingDelegate = {
+type DelegateInfo = {
   name: string
   unit: string
   phone: string | null
+  seat_number: string | null
 }
 
 export default function StatsCards() {
   const [stats, setStats] = useState({ total: 0, attended: 0, pending: 0 })
-  const [pendingList, setPendingList] = useState<PendingDelegate[]>([])
+  const [pendingList, setPendingList] = useState<DelegateInfo[]>([])
+  const [attendedList, setAttendedList] = useState<DelegateInfo[]>([])
 
   useEffect(() => {
     fetchStats()
@@ -28,17 +30,20 @@ export default function StatsCards() {
   }, [])
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('delegates').select('status, name, unit, phone').order('name', { ascending: true })
+    const { data } = await supabase.from('delegates').select('status, name, unit, phone, seat_number').order('name', { ascending: true })
     if (data) {
       const total = data.length
-      const attended = data.filter(d => d.status === 'Attended').length
+      const attended = data.filter(d => d.status === 'Attended')
+      const pending = data.filter(d => d.status === 'Pending')
+
       setStats({
         total,
-        attended,
-        pending: total - attended
+        attended: attended.length,
+        pending: pending.length
       })
       
-      setPendingList(data.filter(d => d.status === 'Pending'))
+      setAttendedList(attended)
+      setPendingList(pending)
     }
   }
 
@@ -74,38 +79,83 @@ export default function StatsCards() {
         </Card>
       </div>
 
-      {pendingList.length > 0 && (
-        <Card className="border-red-200">
-          <CardHeader className="bg-red-50 border-b border-red-100 rounded-t-xl">
-            <CardTitle className="text-red-800 flex items-center gap-2">
-              <UserX className="w-5 h-5" /> Danh sách Đại biểu chưa đến
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Left Column: Attended */}
+        <Card className="border-green-200 shadow-sm h-[600px] flex flex-col">
+          <CardHeader className="bg-green-50/80 border-b border-green-100 rounded-t-xl py-3 px-4 shrink-0">
+            <CardTitle className="text-green-800 flex items-center gap-2 text-base">
+              <UserCheck className="w-5 h-5" /> ĐẠI BIỂU ĐÃ CÓ MẶT
             </CardTitle>
-            <CardDescription className="text-red-600/80">Danh sách cần đôn đốc tham dự hội nghị.</CardDescription>
+            <CardDescription className="text-green-600/80 text-xs">Danh sách đại biểu đã check-in thành công.</CardDescription>
           </CardHeader>
-          <CardContent className="p-0 max-h-[500px] overflow-y-auto custom-scrollbar">
+          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
             <Table>
-              <TableHeader className="bg-gray-50 sticky top-0 z-10">
+              <TableHeader className="bg-gray-50/90 sticky top-0 z-10 shadow-sm">
                 <TableRow>
-                  <TableHead className="w-[50px] text-center">STT</TableHead>
-                  <TableHead>Họ và tên</TableHead>
-                  <TableHead>Đơn vị</TableHead>
-                  <TableHead>Số điện thoại</TableHead>
+                  <TableHead className="w-[50px] text-center text-xs">STT</TableHead>
+                  <TableHead className="text-xs">Họ và tên</TableHead>
+                  <TableHead className="text-xs">Đơn vị</TableHead>
+                  <TableHead className="text-center text-xs w-[80px]">Ghế</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingList.map((delegate, index) => (
-                  <TableRow key={index} className="hover:bg-red-50/50 transition-colors">
-                    <TableCell className="text-center font-medium text-gray-500">{index + 1}</TableCell>
-                    <TableCell className="font-bold text-gray-900">{delegate.name}</TableCell>
-                    <TableCell className="text-gray-600">{delegate.unit}</TableCell>
-                    <TableCell className="font-mono text-gray-600">{delegate.phone || '---'}</TableCell>
-                  </TableRow>
-                ))}
+                {attendedList.length === 0 ? (
+                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-gray-500">Chưa có đại biểu nào điểm danh.</TableCell></TableRow>
+                ) : (
+                  attendedList.map((delegate, index) => (
+                    <TableRow key={index} className="hover:bg-green-50/30 transition-colors">
+                      <TableCell className="text-center font-medium text-gray-500 text-xs">{index + 1}</TableCell>
+                      <TableCell className="font-bold text-gray-900 text-sm">{delegate.name}</TableCell>
+                      <TableCell className="text-gray-600 text-xs">{delegate.unit}</TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-md bg-green-100 text-green-800 border border-green-200">
+                          {delegate.seat_number || '--'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
-      )}
+
+        {/* Right Column: Pending */}
+        <Card className="border-red-200 shadow-sm h-[600px] flex flex-col">
+          <CardHeader className="bg-red-50/80 border-b border-red-100 rounded-t-xl py-3 px-4 shrink-0">
+            <CardTitle className="text-red-800 flex items-center gap-2 text-base">
+              <UserX className="w-5 h-5" /> ĐẠI BIỂU CHƯA ĐẾN
+            </CardTitle>
+            <CardDescription className="text-red-600/80 text-xs">Danh sách cần đôn đốc tham dự hội nghị.</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 flex-1 overflow-y-auto custom-scrollbar">
+            <Table>
+              <TableHeader className="bg-gray-50/90 sticky top-0 z-10 shadow-sm">
+                <TableRow>
+                  <TableHead className="w-[50px] text-center text-xs">STT</TableHead>
+                  <TableHead className="text-xs">Họ và tên</TableHead>
+                  <TableHead className="text-xs">Đơn vị</TableHead>
+                  <TableHead className="text-xs w-[100px]">Số điện thoại</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingList.length === 0 ? (
+                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-gray-500">Tuyệt vời, tất cả đại biểu đã có mặt!</TableCell></TableRow>
+                ) : (
+                  pendingList.map((delegate, index) => (
+                    <TableRow key={index} className="hover:bg-red-50/30 transition-colors">
+                      <TableCell className="text-center font-medium text-gray-500 text-xs">{index + 1}</TableCell>
+                      <TableCell className="font-bold text-gray-900 text-sm">{delegate.name}</TableCell>
+                      <TableCell className="text-gray-600 text-xs">{delegate.unit}</TableCell>
+                      <TableCell className="font-mono text-gray-600 text-xs">{delegate.phone || '---'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
