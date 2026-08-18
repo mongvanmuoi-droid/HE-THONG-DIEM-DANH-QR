@@ -49,14 +49,98 @@ export default function DelegateTable() {
     return `${origin}/checkin?seat=${seatNumber}`
   }
 
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [newDelegate, setNewDelegate] = useState({ name: '', unit: '', seat_number: '' })
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleAddDelegate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsAdding(true)
+    
+    // Thêm vào bảng delegates
+    const { error } = await supabase.from('delegates').insert([
+      { 
+        name: newDelegate.name, 
+        unit: newDelegate.unit, 
+        seat_number: newDelegate.seat_number,
+        status: 'Pending'
+      }
+    ])
+
+    if (!error) {
+      // Cập nhật hoặc thêm vào bảng seats nếu cần
+      if (newDelegate.seat_number) {
+        // Kiểm tra xem ghế đã có chưa, nếu chưa thì thêm vào
+        const { data: seatData } = await supabase.from('seats').select('id').eq('seat_number', newDelegate.seat_number).single()
+        if (!seatData) {
+          await supabase.from('seats').insert([
+            { seat_number: newDelegate.seat_number, status: 'Empty', delegate_name: newDelegate.name }
+          ])
+        }
+      }
+      
+      setIsAddDialogOpen(false)
+      setNewDelegate({ name: '', unit: '', seat_number: '' })
+      fetchDelegates()
+    } else {
+      alert('Có lỗi xảy ra khi thêm đại biểu.')
+    }
+    setIsAdding(false)
+  }
+
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <CardTitle>Danh sách đại biểu</CardTitle>
           <CardDescription>Quản lý và theo dõi trạng thái điểm danh của đại biểu.</CardDescription>
         </div>
-        <Button onClick={handleExport} variant="outline">Xuất DS Vắng mặt (DOCX)</Button>
+        <div className="flex gap-2">
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger render={<Button variant="default" />}>Thêm Đại biểu</DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Thêm Đại biểu mới</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddDelegate} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Họ và tên</label>
+                  <input 
+                    required 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Nguyễn Văn A"
+                    value={newDelegate.name}
+                    onChange={(e) => setNewDelegate({...newDelegate, name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Đơn vị / Chi bộ</label>
+                  <input 
+                    required 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Chi bộ 1"
+                    value={newDelegate.unit}
+                    onChange={(e) => setNewDelegate({...newDelegate, unit: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Số ghế</label>
+                  <input 
+                    required 
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="A1"
+                    value={newDelegate.seat_number}
+                    onChange={(e) => setNewDelegate({...newDelegate, seat_number: e.target.value})}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isAdding}>
+                  {isAdding ? 'Đang lưu...' : 'Lưu thông tin'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={handleExport} variant="outline">Xuất DS Vắng (DOCX)</Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
@@ -80,7 +164,7 @@ export default function DelegateTable() {
                     {delegate.status === 'Attended' ? 'Đã điểm danh' : 'Chưa điểm danh'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right flex justify-end gap-2">
                   {delegate.seat_number && (
                     <Dialog>
                       <DialogTrigger render={<Button variant="outline" size="sm" />}>
@@ -105,6 +189,18 @@ export default function DelegateTable() {
                       </DialogContent>
                     </Dialog>
                   )}
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={async () => {
+                      if (confirm('Bạn có chắc chắn muốn xóa đại biểu này?')) {
+                        await supabase.from('delegates').delete().eq('id', delegate.id)
+                        fetchDelegates()
+                      }
+                    }}
+                  >
+                    Xóa
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
