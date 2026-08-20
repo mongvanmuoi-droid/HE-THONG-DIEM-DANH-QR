@@ -5,8 +5,31 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase/client'
-import { CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle, MapPin } from 'lucide-react'
 import type { Database } from '@/types/database'
+
+// Toạ độ mặc định của hội trường (Có thể cấu hình qua file .env.local)
+// Ví dụ: NEXT_PUBLIC_HALL_LATITUDE=21.028511
+//        NEXT_PUBLIC_HALL_LONGITUDE=105.804817
+const HALL_LATITUDE = parseFloat(process.env.NEXT_PUBLIC_HALL_LATITUDE || '21.028511') 
+const HALL_LONGITUDE = parseFloat(process.env.NEXT_PUBLIC_HALL_LONGITUDE || '105.804817')
+const MAX_DISTANCE_METERS = 50
+
+function deg2rad(deg: number) {
+  return deg * (Math.PI / 180)
+}
+
+function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3 // Radius of the earth in m
+  const dLat = deg2rad(lat2 - lat1)
+  const dLon = deg2rad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
 
 type Delegate = Database['public']['Tables']['delegates']['Row']
 
@@ -25,8 +48,9 @@ export default function CheckinForm() {
   const [substituteName, setSubstituteName] = useState('')
   const [substituteUnit, setSubstituteUnit] = useState('')
 
-  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'closed' | 'already_checked_in'>('idle')
+  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'closed' | 'already_checked_in' | 'locating' | 'out_of_range'>('locating')
   const [message, setMessage] = useState('')
+  const [currentDistance, setCurrentDistance] = useState<number | null>(null)
 
   useEffect(() => {
     if (!seat) {
@@ -37,6 +61,39 @@ export default function CheckinForm() {
     }
 
     const init = async () => {
+      // 0. Kiểm tra vị trí (Geolocation)
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          if (!navigator.geolocation) {
+            reject(new Error('Trình duyệt không hỗ trợ định vị.'))
+          }
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0
+          })
+        })
+
+        const userLat = pos.coords.latitude
+        const userLon = pos.coords.longitude
+        const distance = getDistanceFromLatLonInM(userLat, userLon, HALL_LATITUDE, HALL_LONGITUDE)
+        setCurrentDistance(Math.round(distance))
+
+        if (distance > MAX_DISTANCE_METERS) {
+          setStatus('out_of_range')
+          setMessage(`Bạn đang ở cách hội trường ${Math.round(distance)}m. Vui lòng di chuyển vào phạm vi ${MAX_DISTANCE_METERS}m để điểm danh.`)
+          setLoading(false)
+          return
+        }
+      } catch (err: any) {
+        setStatus('error')
+        setMessage('Không thể xác định vị trí của bạn. Vui lòng cấp quyền truy cập vị trí (Location) để điểm danh.')
+        setLoading(false)
+        return
+      }
+
+      setStatus('idle')
+
       // 1. Fetch config FIRST
       const { data: configData } = await supabase.from('config').select('*').limit(1).single()
       if (!configData?.is_active) {
@@ -164,8 +221,20 @@ export default function CheckinForm() {
     }
   }
 
-  if (loading && status === 'idle') {
-    return <div className="text-center font-bold text-red-800">Đang tải dữ liệu...</div>
+  if (loading && (status === 'idle' || status === 'locating')) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        {status === 'locating' ? (
+          <>
+            <MapPin className="w-12 h-12 text-blue-600 animate-bounce" />
+            <div className="text-center font-bold text-blue-800">Đang kiểm tra vị trí của bạn...</div>
+            <p className="text-sm text-gray-500">Vui lòng cấp quyền vị trí nếu được yêu cầu.</p>
+          </>
+        ) : (
+          <div className="text-center font-bold text-red-800">Đang tải dữ liệu...</div>
+        )}
+      </div>
+    )
   }
 
   if (status === 'success') {
@@ -181,13 +250,17 @@ export default function CheckinForm() {
     )
   }
 
-  if (status === 'error' || status === 'closed' || status === 'already_checked_in') {
+  if (status === 'error' || status === 'closed' || status === 'already_checked_in' || status === 'out_of_range') {
     return (
       <Card className="border-4 border-red-700 shadow-xl bg-white/95">
         <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
-          <AlertCircle className="w-20 h-20 text-red-600" />
+          {status === 'out_of_range' ? (
+            <MapPin className="w-20 h-20 text-orange-500" />
+          ) : (
+            <AlertCircle className="w-20 h-20 text-red-600" />
+          )}
           <h2 className="text-xl font-bold text-red-700 text-center uppercase">
-            {status === 'closed' ? 'Hệ thống đóng' : 'Không thể điểm danh'}
+            {status === 'closed' ? 'Hệ thống đóng' : status === 'out_of_range' ? 'Ngoài phạm vi điểm danh' : 'Không thể điểm danh'}
           </h2>
           <p className="text-center text-gray-700 font-medium">{message}</p>
         </CardContent>
