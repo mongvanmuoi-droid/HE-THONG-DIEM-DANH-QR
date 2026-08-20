@@ -121,7 +121,11 @@ export default function StatsCards() {
                       <TableCell className="text-sm font-semibold text-orange-600 px-2">
                         {delegate.is_substituted ? delegate.substitute_name : ''}
                       </TableCell>
-                      <TableCell className="text-gray-600 text-xs px-2">{delegate.unit}</TableCell>
+                      <TableCell className="text-gray-600 text-xs px-2">
+                        <div className="max-w-[150px] xl:max-w-[220px] whitespace-normal break-words">
+                          {delegate.unit}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-center text-gray-600 font-mono text-xs px-2 whitespace-nowrap">
                         {formatTime(delegate.checkin_time)}
                       </TableCell>
@@ -164,7 +168,11 @@ export default function StatsCards() {
                     <TableRow key={index} className="hover:bg-red-50/30 transition-colors">
                       <TableCell className="text-center font-medium text-gray-500 text-xs">{index + 1}</TableCell>
                       <TableCell className="font-bold text-gray-900 text-sm">{delegate.name}</TableCell>
-                      <TableCell className="text-gray-600 text-xs">{delegate.unit}</TableCell>
+                      <TableCell className="text-gray-600 text-xs px-2">
+                        <div className="max-w-[150px] xl:max-w-[220px] whitespace-normal break-words">
+                          {delegate.unit}
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-gray-600 text-xs">{delegate.phone || '---'}</TableCell>
                     </TableRow>
                   ))
