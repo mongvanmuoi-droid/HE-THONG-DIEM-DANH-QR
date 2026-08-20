@@ -99,15 +99,15 @@ export default function StatsCards() {
             <CardDescription className="text-green-600/80 text-xs">Danh sách đại biểu đã check-in thành công.</CardDescription>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-auto custom-scrollbar">
-            <Table className="relative min-w-[500px]">
+            <Table className="relative w-full">
               <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
                 <TableRow className="hover:bg-gray-100">
-                  <TableHead className="w-[40px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">STT</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[120px] px-2">Họ và tên</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Người đi thay</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[100px] px-2">Đơn vị</TableHead>
-                  <TableHead className="text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap w-[70px] px-2">Thời gian</TableHead>
-                  <TableHead className="text-center text-xs w-[50px] font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Ghế</TableHead>
+                  <TableHead className="text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 px-2">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 px-2">Người đi thay</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 px-2">Đơn vị</TableHead>
+                  <TableHead className="text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Thời gian</TableHead>
+                  <TableHead className="text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Ghế</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -147,13 +147,13 @@ export default function StatsCards() {
             <CardDescription className="text-red-600/80 text-xs">Danh sách cần đôn đốc tham dự hội nghị.</CardDescription>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-auto custom-scrollbar">
-            <Table className="relative min-w-[500px]">
+            <Table className="relative w-full">
               <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
                 <TableRow className="hover:bg-gray-100">
-                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">STT</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[120px]">Họ và tên</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[100px]">Đơn vị</TableHead>
-                  <TableHead className="text-xs w-[100px] font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">Số điện thoại</TableHead>
+                  <TableHead className="text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 px-2">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 px-2">Đơn vị</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Số điện thoại</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
