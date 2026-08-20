@@ -21,7 +21,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row gap-4 justify-between items-center text-center sm:text-left">
+        <div className="max-w-[1600px] mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row gap-4 justify-between items-center text-center sm:text-left">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 uppercase">Quản trị Hội nghị</h1>
             <p className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mt-1">Đảng uỷ xã Lục Yên, Tỉnh Lào Cai</p>
@@ -34,7 +34,7 @@ export default async function AdminLayout({
         </div>
       </header>
       <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto py-6 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>

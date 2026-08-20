@@ -89,7 +89,7 @@ export default function StatsCards() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
         {/* Left Column: Attended */}
         <Card className="border-green-200 shadow-sm h-[600px] flex flex-col">
           <CardHeader className="bg-green-50/80 border-b border-green-100 rounded-t-xl py-3 px-4 shrink-0">
