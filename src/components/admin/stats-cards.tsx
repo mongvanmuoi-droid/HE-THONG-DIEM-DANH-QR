@@ -13,6 +13,14 @@ type DelegateInfo = {
   seat_number: string | null
   is_substituted: boolean | null
   substitute_name: string | null
+  checkin_time: string | null
+}
+
+const formatTime = (isoString: string | null) => {
+  if (!isoString) return '--:--'
+  const date = new Date(isoString)
+  if (isNaN(date.getTime())) return '--:--'
+  return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
 export default function StatsCards() {
@@ -32,7 +40,7 @@ export default function StatsCards() {
   }, [])
 
   const fetchStats = async () => {
-    const { data } = await supabase.from('delegates').select('status, name, unit, phone, seat_number, is_substituted, substitute_name').order('name', { ascending: true })
+    const { data } = await supabase.from('delegates').select('status, name, unit, phone, seat_number, is_substituted, substitute_name, checkin_time').order('name', { ascending: true })
     if (data) {
       const total = data.length
       const attended = data.filter(d => d.status === 'Attended')
@@ -94,27 +102,31 @@ export default function StatsCards() {
             <Table className="relative min-w-[500px]">
               <TableHeader className="sticky top-0 z-20 bg-gray-100 shadow-[0_1px_0_0_#e5e7eb]">
                 <TableRow className="hover:bg-gray-100">
-                  <TableHead className="w-[50px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">STT</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[120px]">Họ và tên</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">Người đi thay</TableHead>
-                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[100px]">Đơn vị</TableHead>
-                  <TableHead className="text-center text-xs w-[60px] font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap">Ghế</TableHead>
+                  <TableHead className="w-[40px] text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">STT</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[120px] px-2">Họ và tên</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Người đi thay</TableHead>
+                  <TableHead className="text-xs font-bold text-gray-700 bg-gray-100 h-10 min-w-[100px] px-2">Đơn vị</TableHead>
+                  <TableHead className="text-center text-xs font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap w-[70px] px-2">Thời gian</TableHead>
+                  <TableHead className="text-center text-xs w-[50px] font-bold text-gray-700 bg-gray-100 h-10 whitespace-nowrap px-2">Ghế</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {attendedList.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-gray-500">Chưa có đại biểu nào điểm danh.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-gray-500">Chưa có đại biểu nào điểm danh.</TableCell></TableRow>
                 ) : (
                   attendedList.map((delegate, index) => (
                     <TableRow key={index} className="hover:bg-green-50/30 transition-colors">
-                      <TableCell className="text-center font-medium text-gray-500 text-xs">{index + 1}</TableCell>
-                      <TableCell className="font-bold text-gray-900 text-sm">{delegate.name}</TableCell>
-                      <TableCell className="text-sm font-semibold text-orange-600">
+                      <TableCell className="text-center font-medium text-gray-500 text-xs px-2">{index + 1}</TableCell>
+                      <TableCell className="font-bold text-gray-900 text-sm px-2">{delegate.name}</TableCell>
+                      <TableCell className="text-sm font-semibold text-orange-600 px-2">
                         {delegate.is_substituted ? delegate.substitute_name : ''}
                       </TableCell>
-                      <TableCell className="text-gray-600 text-xs">{delegate.unit}</TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-md bg-green-100 text-green-800 border border-green-200">
+                      <TableCell className="text-gray-600 text-xs px-2">{delegate.unit}</TableCell>
+                      <TableCell className="text-center text-gray-600 font-mono text-xs px-2 whitespace-nowrap">
+                        {formatTime(delegate.checkin_time)}
+                      </TableCell>
+                      <TableCell className="text-center px-2">
+                        <span className="inline-flex items-center justify-center px-1.5 py-1 text-xs font-bold rounded-md bg-green-100 text-green-800 border border-green-200">
                           {delegate.seat_number || '--'}
                         </span>
                       </TableCell>

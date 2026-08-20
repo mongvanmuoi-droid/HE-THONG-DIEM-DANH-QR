@@ -13,18 +13,18 @@ type Delegate = Database['public']['Tables']['delegates']['Row']
 export default function CheckinForm() {
   const searchParams = useSearchParams()
   const seat = searchParams.get('seat')
-  
+
   const [loading, setLoading] = useState(true)
   const [config, setConfig] = useState<any>(null)
   const [delegates, setDelegates] = useState<Delegate[]>([])
   const [filteredDelegates, setFilteredDelegates] = useState<Delegate[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedDelegate, setSelectedDelegate] = useState<string>('')
-  
+
   const [isSubstituted, setIsSubstituted] = useState(false)
   const [substituteName, setSubstituteName] = useState('')
   const [substituteUnit, setSubstituteUnit] = useState('')
-  
+
   const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'closed' | 'already_checked_in'>('idle')
   const [message, setMessage] = useState('')
 
@@ -109,7 +109,7 @@ export default function CheckinForm() {
 
     const delegateInfo = delegates.find(d => d.id === selectedDelegate)
     const finalDelegateName = isSubstituted ? `${substituteName} (Thay: ${delegateInfo?.name})` : delegateInfo?.name
-    
+
     // Perform updates
     try {
       // 1. Update seats with concurrency control
@@ -120,20 +120,20 @@ export default function CheckinForm() {
         .eq('status', 'Empty')
         .select()
         .single()
-        
+
       if (seatError || !updatedSeat) {
         setStatus('error')
         setMessage('Rất tiếc, ghế này vừa bị người khác chọn trước bạn vài giây. Vui lòng chọn ghế khác.')
         setLoading(false)
         return
       }
-      
+
       // 2. Update delegates
       await supabase
         .from('delegates')
-        .update({ 
-          status: 'Attended', 
-          checkin_time: new Date().toISOString(), 
+        .update({
+          status: 'Attended',
+          checkin_time: new Date().toISOString(),
           seat_number: seat,
           is_substituted: isSubstituted,
           substitute_name: isSubstituted ? substituteName : null,
@@ -153,7 +153,7 @@ export default function CheckinForm() {
       // Lock device
       const lockKey = `device_checked_in_${config?.meeting_date || 'default'}_${config?.meeting_time || 'default'}`
       localStorage.setItem(lockKey, 'true')
-      
+
       setStatus('success')
       setMessage(`Chào mừng ${isSubstituted ? 'đại biểu' : ''} ${finalDelegateName} đã đến tham dự hội nghị!`)
     } catch (err) {
@@ -207,7 +207,7 @@ export default function CheckinForm() {
         </p>
         <p className="text-sm text-gray-600">{config?.location}</p>
       </CardHeader>
-      
+
       <CardContent className="pt-6 space-y-6">
         <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-center">
           <p className="text-sm text-red-800 uppercase font-bold mb-1">Vị trí của bạn</p>
@@ -216,7 +216,7 @@ export default function CheckinForm() {
 
         <div className="space-y-3">
           <label className="block text-sm font-bold text-gray-700 uppercase">Tìm kiếm & Xác nhận đại biểu</label>
-          <input 
+          <input
             type="text"
             placeholder="🔎 Nhập tên của bạn hoặc đơn vị..."
             className="w-full h-12 px-4 rounded-lg border-2 border-gray-300 focus:border-red-500 focus:ring-red-500 transition-colors"
@@ -225,14 +225,13 @@ export default function CheckinForm() {
           />
           <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
             {filteredDelegates.map((d) => (
-              <div 
+              <div
                 key={d.id}
                 onClick={() => setSelectedDelegate(d.id)}
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  selectedDelegate === d.id 
-                    ? 'border-red-600 bg-red-50 shadow-md' 
-                    : 'border-gray-200 hover:border-red-300'
-                }`}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedDelegate === d.id
+                  ? 'border-red-600 bg-red-50 shadow-md'
+                  : 'border-gray-200 hover:border-red-300'
+                  }`}
               >
                 <p className="font-bold text-lg text-gray-900">{d.name}</p>
                 <p className="text-sm text-gray-600">{d.unit}</p>
@@ -242,24 +241,24 @@ export default function CheckinForm() {
               <p className="text-center text-gray-500 py-4">Không tìm thấy đại biểu phù hợp.</p>
             )}
           </div>
-          
+
           {selectedDelegate && (
             <div className="mt-6 p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
               <label className="flex items-center space-x-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   className="w-6 h-6 text-red-600 rounded border-gray-300 focus:ring-red-500"
                   checked={isSubstituted}
                   onChange={(e) => setIsSubstituted(e.target.checked)}
                 />
                 <span className="text-gray-900 font-bold">Tôi là NGƯỜI ĐI THAY</span>
               </label>
-              
+
               {isSubstituted && (
                 <div className="mt-4 space-y-3">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Họ và tên người đi thay</label>
-                    <input 
+                    <input
                       type="text"
                       placeholder="Nhập họ và tên của bạn..."
                       className="w-full h-10 px-3 rounded-md border border-gray-300 focus:border-red-500 focus:ring-red-500"
@@ -269,7 +268,7 @@ export default function CheckinForm() {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Đơn vị người đi thay</label>
-                    <input 
+                    <input
                       type="text"
                       placeholder="Nhập đơn vị của bạn..."
                       className="w-full h-10 px-3 rounded-md border border-gray-300 focus:border-red-500 focus:ring-red-500"
@@ -285,7 +284,7 @@ export default function CheckinForm() {
       </CardContent>
 
       <CardFooter>
-        <Button 
+        <Button
           className="w-full h-14 text-lg font-bold bg-red-700 hover:bg-red-800 text-yellow-400 border border-yellow-500 shadow-lg"
           onClick={handleCheckin}
           disabled={loading || !selectedDelegate || (isSubstituted && (!substituteName.trim() || !substituteUnit.trim()))}

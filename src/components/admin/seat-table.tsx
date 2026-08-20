@@ -122,7 +122,7 @@ export default function SeatMap() {
 
           {/* Sân khấu */}
           <div className="w-full max-w-2xl mx-auto h-16 bg-red-800 text-white font-bold text-xl flex items-center justify-center rounded-b-3xl shadow-lg mb-12">
-            SÂN KHẤU / KHU VỰC ĐẠI BIỂU CẤP CAO
+            SÂN KHẤU/ BÀN CHỦ TRÌ HỘI NGHỊ
           </div>
 
           {/* Sơ đồ ghế */}
