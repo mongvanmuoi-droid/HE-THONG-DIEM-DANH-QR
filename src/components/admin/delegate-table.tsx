@@ -10,6 +10,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '@/lib/supabase/client'
 import { generateAbsentDocx } from '@/lib/doc-export'
 import * as XLSX from 'xlsx'
+import { toast } from 'sonner'
 import type { Database } from '@/types/database'
 
 type Delegate = Database['public']['Tables']['delegates']['Row']
@@ -17,6 +18,7 @@ type Delegate = Database['public']['Tables']['delegates']['Row']
 export default function DelegateTable() {
   const [delegates, setDelegates] = useState<Delegate[]>([])
   const [meetingName, setMeetingName] = useState('')
+  const [checkingInId, setCheckingInId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDelegates()
@@ -48,6 +50,30 @@ export default function DelegateTable() {
   const getCheckinUrl = (seatNumber: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     return `${origin}/checkin?seat=${seatNumber}`
+  }
+
+  const handleManualCheckIn = async (delegateId: string) => {
+    setCheckingInId(delegateId)
+    try {
+      const { error } = await supabase
+        .from('delegates')
+        .update({ 
+          status: 'Attended', 
+          checkin_time: new Date().toISOString(),
+          seat_number: 'Bàn Thư Ký' 
+        })
+        .eq('id', delegateId)
+
+      if (error) throw error
+
+      toast.success('Điểm danh thành công!')
+      fetchDelegates()
+    } catch (error) {
+      console.error(error)
+      toast.error('Có lỗi xảy ra khi điểm danh.')
+    } finally {
+      setCheckingInId(null)
+    }
   }
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -272,6 +298,20 @@ export default function DelegateTable() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right flex justify-end gap-2">
+                  {delegate.status === 'Pending' ? (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      disabled={checkingInId === delegate.id}
+                      onClick={() => handleManualCheckIn(delegate.id)}
+                    >
+                      {checkingInId === delegate.id ? 'Đang điểm danh...' : 'Điểm danh'}
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="outline" disabled>
+                      Đã điểm danh
+                    </Button>
+                  )}
                   {delegate.seat_number && (
                     <Dialog>
                       <DialogTrigger render={<Button variant="outline" size="sm" />}>
