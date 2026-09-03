@@ -11,7 +11,7 @@ import type { Database } from '@/types/database'
 // Cố định toạ độ để tránh lỗi từ biến môi trường trên Vercel (bị ngược vĩ độ/kinh độ)
 const HALL_LATITUDE = 22.11075 
 const HALL_LONGITUDE = 104.76976
-const MAX_DISTANCE_METERS = 150
+const MAX_DISTANCE_METERS = 60
 
 function deg2rad(deg: number) {
   return deg * (Math.PI / 180)
