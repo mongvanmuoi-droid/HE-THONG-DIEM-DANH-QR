@@ -8,12 +8,10 @@ import { supabase } from '@/lib/supabase/client'
 import { CheckCircle2, AlertCircle, MapPin } from 'lucide-react'
 import type { Database } from '@/types/database'
 
-// Toạ độ mặc định của hội trường (Có thể cấu hình qua file .env.local)
-// Ví dụ: NEXT_PUBLIC_HALL_LATITUDE=21.028511
-//        NEXT_PUBLIC_HALL_LONGITUDE=105.804817
-const HALL_LATITUDE = parseFloat(process.env.NEXT_PUBLIC_HALL_LATITUDE || '21.028511') 
-const HALL_LONGITUDE = parseFloat(process.env.NEXT_PUBLIC_HALL_LONGITUDE || '105.804817')
-const MAX_DISTANCE_METERS = 50
+// Cố định toạ độ để tránh lỗi từ biến môi trường trên Vercel (bị ngược vĩ độ/kinh độ)
+const HALL_LATITUDE = 22.11075 
+const HALL_LONGITUDE = 104.76976
+const MAX_DISTANCE_METERS = 150
 
 function deg2rad(deg: number) {
   return deg * (Math.PI / 180)
