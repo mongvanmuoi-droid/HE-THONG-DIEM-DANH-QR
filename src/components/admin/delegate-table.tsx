@@ -52,25 +52,34 @@ export default function DelegateTable() {
     return `${origin}/checkin?seat=${seatNumber}`
   }
 
-  const handleManualCheckIn = async (delegateId: string) => {
+  const handleStatusChange = async (delegateId: string, newStatus: string) => {
     setCheckingInId(delegateId)
     try {
+      const updateData: any = { status: newStatus }
+      
+      if (newStatus === 'Attended') {
+        updateData.checkin_time = new Date().toISOString()
+        // Chỉ cập nhật bàn thư ký nếu chưa có ghế
+        const delegate = delegates.find(d => d.id === delegateId)
+        if (!delegate?.seat_number) {
+          updateData.seat_number = 'Bàn Thư Ký'
+        }
+      } else if (newStatus === 'Absent' || newStatus === 'Pending') {
+        updateData.checkin_time = null
+      }
+
       const { error } = await supabase
         .from('delegates')
-        .update({ 
-          status: 'Attended', 
-          checkin_time: new Date().toISOString(),
-          seat_number: 'Bàn Thư Ký' 
-        })
+        .update(updateData)
         .eq('id', delegateId)
 
       if (error) throw error
 
-      toast.success('Điểm danh thành công!')
+      toast.success('Cập nhật trạng thái thành công!')
       fetchDelegates()
     } catch (error) {
       console.error(error)
-      toast.error('Có lỗi xảy ra khi điểm danh.')
+      toast.error('Có lỗi xảy ra khi cập nhật.')
     } finally {
       setCheckingInId(null)
     }
@@ -293,25 +302,21 @@ export default function DelegateTable() {
                 <TableCell>{delegate.phone || '---'}</TableCell>
                 <TableCell>{delegate.seat_number}</TableCell>
                 <TableCell>
-                  <Badge variant={delegate.status === 'Attended' ? 'default' : 'secondary'} className={delegate.status === 'Attended' ? 'bg-green-600' : ''}>
-                    {delegate.status === 'Attended' ? 'Đã điểm danh' : 'Chưa điểm danh'}
+                  <Badge variant={delegate.status === 'Attended' ? 'default' : delegate.status === 'Absent' ? 'destructive' : 'secondary'} className={delegate.status === 'Attended' ? 'bg-green-600' : ''}>
+                    {delegate.status === 'Attended' ? 'Đã điểm danh' : delegate.status === 'Absent' ? 'Vắng mặt' : 'Chưa điểm danh'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right flex justify-end gap-2">
-                  {delegate.status === 'Pending' ? (
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      disabled={checkingInId === delegate.id}
-                      onClick={() => handleManualCheckIn(delegate.id)}
-                    >
-                      {checkingInId === delegate.id ? 'Đang điểm danh...' : 'Điểm danh'}
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="outline" disabled>
-                      Đã điểm danh
-                    </Button>
-                  )}
+                <TableCell className="text-right flex justify-end gap-2 items-center">
+                  <select
+                    className="h-8 rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={delegate.status}
+                    onChange={(e) => handleStatusChange(delegate.id, e.target.value)}
+                    disabled={checkingInId === delegate.id}
+                  >
+                    <option value="Pending">Chưa điểm danh</option>
+                    <option value="Attended">Điểm danh</option>
+                    <option value="Absent">Báo vắng</option>
+                  </select>
                   {delegate.seat_number && (
                     <Dialog>
                       <DialogTrigger render={<Button variant="outline" size="sm" />}>
